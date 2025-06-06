@@ -19,7 +19,7 @@
       <ol>
         <li>請在心裡預想一個你想要的師大科系，不要告訴電腦！</li>
         <li>系統會隨機問你問題，請誠實作答。</li>
-        <li>系統會多問幾題再推測你的科系，並顯示信心分數。</li>
+        <li>系統最多會問20題再推測你的科系，並顯示信心分數。</li>
       </ol>
       <button class="btn" onclick="startGame()">開始遊戲</button>
     </div>
@@ -47,7 +47,7 @@
     // 狀態
     let askedQuestions = [];
     let answers = [];
-    let maxQuestions = 15; // 最多問幾題
+    let maxQuestions = 20; // 最多問幾題
     let remainingQuestions = [];
     let currentQuestion = null;
 
