@@ -12,4 +12,4 @@
 4. 查詢結果
 
 ## 實際操作可以點這個影片來觀看 
-[遊玩影片](https://github.com/weiwei-202/Departments/blob/main/%E9%81%8A%E6%88%B2%E5%BD%B1%E7%89%87.zip)
+[遊玩影片](https://github.com/weiwei-202/Departments/blob/main/%E9%81%8A%E6%88%B2%E5%BD%B1%E7%89%87.zip) (點選view raw下載或是點選右上三個點後下載)
