@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>師大科系猜猜樂</title>
+  <style>
+    body { font-family: "Noto Sans TC", Arial, sans-serif; background: #f5f5fa; }
+    #game-box { width: 400px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 12px #ccc; }
+    .btn { margin: 10px; padding: 10px 24px; border: none; border-radius: 6px; background: #4b8bf4; color: #fff; font-size: 1.1em; cursor: pointer; }
+    .btn:hover { background: #2d66c1; }
+    #restart { margin-top: 20px; background: #888; }
+    #showResult { background: #f4b84b; }
+  </style>
+</head>
+<body>
+  <div id="game-box">
+    <h2>師大科系猜猜樂</h2>
+    <div id="intro">
+      <ol>
+        <li>請在心裡預想一個你想要的師大科系，不要告訴電腦！</li>
+        <li>系統會隨機問你問題，請誠實作答。</li>
+        <li>系統會多問幾題再推測你的科系，並顯示信心分數。</li>
+      </ol>
+      <button class="btn" onclick="startGame()">開始遊戲</button>
+    </div>
+    <div id="question" style="display:none;"></div>
+    <div id="options"></div>
+    <div id="result"></div>
+    <button id="showResult" class="btn" style="display:none;" onclick="showResult()">猜猜我是誰</button>
+    <button id="restart" class="btn" style="display:none;">重新開始</button>
+  </div>
+  <script src="departments.js"></script>
+  <script>
+    // 建立題庫
+    let allQuestions = [];
+    departments.forEach((dept, deptIdx) => {
+      dept.questions.forEach(q => {
+        let found = allQuestions.find(item => item.text === q);
+        if (found) {
+          found.depts.push(deptIdx);
+        } else {
+          allQuestions.push({ text: q, depts: [deptIdx] });
+        }
+      });
+    });
+
+    // 狀態
+    let askedQuestions = [];
+    let answers = [];
+    let maxQuestions = 15; // 最多問幾題
+    let remainingQuestions = [];
+    let currentQuestion = null;
+
+    function startGame() {
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('question').style.display = '';
+      document.getElementById('showResult').style.display = '';
+      document.getElementById('restart').style.display = 'none';
+      document.getElementById('result').innerHTML = '';
+      askedQuestions = [];
+      answers = [];
+      remainingQuestions = allQuestions.map((q, idx) => idx);
+      askRandomQuestion();
+    }
+
+    function askRandomQuestion() {
+      if (askedQuestions.length >= maxQuestions || remainingQuestions.length === 0) {
+        showResult();
+        return;
+      }
+      let idx = Math.floor(Math.random() * remainingQuestions.length);
+      let qIdx = remainingQuestions[idx];
+      currentQuestion = { ...allQuestions[qIdx], idx: qIdx };
+      document.getElementById('question').innerText = `第${askedQuestions.length+1}題：${currentQuestion.text}`;
+      document.getElementById('options').innerHTML = `
+        <button class="btn" onclick="recordAnswer(${qIdx}, 1)">是</button>
+        <button class="btn" onclick="recordAnswer(${qIdx}, 0)">否</button>
+        <button class="btn" onclick="recordAnswer(${qIdx}, -1)">不知道</button>
+      `;
+      // 移除已問過的題目
+      remainingQuestions.splice(idx, 1);
+    }
+
+    function recordAnswer(qIdx, ans) {
+      askedQuestions.push(qIdx);
+      answers.push({qIdx, ans}); // 1:是, 0:否, -1:不知道
+      askRandomQuestion();
+    }
+
+    function showResult() {
+      document.getElementById('question').style.display = 'none';
+      document.getElementById('options').innerHTML = '';
+      document.getElementById('showResult').style.display = 'none';
+
+      // 信心分數計算
+      // 每個科系：分母=該科系被問到的題數，分子=玩家回答吻合的數量
+      let scores = departments.map((dept, deptIdx) => {
+        let total = 0, match = 0;
+        answers.forEach(({qIdx, ans}) => {
+          if (ans === -1) return; // 不知道不計分
+          if (allQuestions[qIdx].depts.includes(deptIdx)) {
+            total++;
+            if (ans === 1) match++;
+          } else {
+            if (ans === 0) match++; // 非該科系題目選否也算吻合
+            total++;
+          }
+        });
+        let percent = total > 0 ? Math.round(100 * match / total) : 0;
+        return { deptIdx, percent, match, total };
+      });
+
+      // 依信心分數排序
+      scores.sort((a, b) => b.percent - a.percent);
+
+      let top = scores[0].percent;
+      let candidates = scores.filter(s => s.percent === top && top > 0);
+
+      let resultHTML = '';
+      if (candidates.length === 0) {
+        resultHTML = "暫時無法猜出你心裡的科系，請再多回答一些問題！";
+      } else {
+        resultHTML = "我猜你可能是：<br>" + candidates.map(s =>
+          `<b>${departments[s.deptIdx].college} - ${departments[s.deptIdx].name}</b>（信心分數：${s.percent}%）`
+        ).join('<br>');
+      }
+      // 也可顯示全部分數
+      resultHTML += "<hr><b>所有科系信心分數：</b><br>";
+      resultHTML += scores.map(s =>
+        `${departments[s.deptIdx].college} - ${departments[s.deptIdx].name}：${s.percent}%`
+      ).join('<br>');
+
+      document.getElementById('result').innerHTML = resultHTML;
+      document.getElementById('restart').style.display = 'inline-block';
+    }
+
+    document.getElementById('restart').onclick = function() {
+      document.getElementById('intro').style.display = '';
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('question').style.display = 'none';
+      document.getElementById('showResult').style.display = 'none';
+      document.getElementById('restart').style.display = 'none';
+    };
+  </script>
+</body>
+</html>
+
